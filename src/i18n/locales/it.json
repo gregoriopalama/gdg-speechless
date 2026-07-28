@@ -1,0 +1,43 @@
+{
+  "app": {
+    "title": "Speechless",
+    "tagline": "Riesci a presentare un tema usando slide del tutto a caso?"
+  },
+  "levels": {
+    "beginner": {
+      "name": "Beginner",
+      "description": "Temi semplici e quotidiani, slide vagamente correlate."
+    },
+    "intermediate": {
+      "name": "Intermediate",
+      "description": "Temi di media difficoltà, slide a volte fuori contesto."
+    },
+    "advanced": {
+      "name": "Advanced",
+      "description": "Temi tecnici e complessi, slide quasi del tutto scollegate."
+    },
+    "legend": {
+      "name": "Legend",
+      "description": "Caos totale. Temi astratti, slide completamente causali."
+    }
+  },
+  "gameplay": {
+    "start": "Inizia la sfida",
+    "next": "Avanti",
+    "prev": "Indietro",
+    "finalSlide": {
+      "title": "Grazie per l'attenzione!",
+      "applause": "Spazio agli applausi ed alle domande.",
+      "reset": "Ricomincia da capo"
+    },
+    "loading": {
+      "theme": "Gemini sta scrivendo il tema...",
+      "slides": "Il nostro artista sta disegnando le slide..."
+    },
+    "error": {
+      "title": "Ops! Qualcosa è andato storto",
+      "message": "La scimmia spaziale che disegna le slide è in sciopero. Servizio temporaneamente non disponibile.",
+      "back": "Ritorna al Menu"
+    }
+  }
+}

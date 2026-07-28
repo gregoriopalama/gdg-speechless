@@ -1,0 +1,43 @@
+{
+  "app": {
+    "title": "Speechless",
+    "tagline": "Can you pitch a topic using completely random slides?"
+  },
+  "levels": {
+    "beginner": {
+      "name": "Beginner",
+      "description": "Simple everyday topics, slides are loosely related."
+    },
+    "intermediate": {
+      "name": "Intermediate",
+      "description": "Average difficulty topics, slides sometimes out of context."
+    },
+    "advanced": {
+      "name": "Advanced",
+      "description": "Complex technical topics, slides mostly disconnected."
+    },
+    "legend": {
+      "name": "Legend",
+      "description": "Total chaos. Abstract topics, completely random slides."
+    }
+  },
+  "gameplay": {
+    "start": "Start Challenge",
+    "next": "Next",
+    "prev": "Back",
+    "finalSlide": {
+      "title": "Thank you for listening!",
+      "applause": "Time for applause and questions.",
+      "reset": "Start Over"
+    },
+    "loading": {
+      "theme": "Gemini is writing the topic...",
+      "slides": "Our artist is drawing the slides..."
+    },
+    "error": {
+      "title": "Oops! Something went wrong",
+      "message": "The space monkey drawing the slides is on strike. Service temporarily unavailable.",
+      "back": "Back to Menu"
+    }
+  }
+}
