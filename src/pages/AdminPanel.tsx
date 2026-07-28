@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { useGame } from '../context/GameContext';
+import { useSpeechless } from '../context/SpeechlessContext';
 import { useTranslation } from 'react-i18next';
 
 export const AdminPanel: React.FC = () => {
-  const { gameState, loading, error, updateHostConfig, resetGame } = useGame();
+  const { gameState, loading, error, updateHostConfig, resetGame } = useSpeechless();
   const { i18n } = useTranslation();
   const [seedInput, setSeedInput] = useState<string>(gameState?.seed || '');
   const [slidesCountInput, setSlidesCountInput] = useState<number>(gameState?.slidesCount || 5);
   const [visualStyleInput, setVisualStyleInput] = useState<string>(gameState?.visualStyle || '');
   const [saving, setSaving] = useState<boolean>(false);
 
-  if (loading) return <div style={{ padding: '2rem', color: '#fff' }}>Caricamento sessione...</div>;
-  if (error) return <div style={{ padding: '2rem', color: '#ff4444' }}>Errore: {error.message}</div>;
+  if (loading) return <div style={{ padding: '2rem', color: '#1a1a1a', fontFamily: 'sans-serif' }}>Caricamento sessione...</div>;
+  if (error) return <div style={{ padding: '2rem', color: '#d32f2f', fontFamily: 'sans-serif' }}>Errore: {error.message}</div>;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,14 +39,15 @@ export const AdminPanel: React.FC = () => {
     <div style={{
       maxWidth: '600px',
       margin: '2rem auto',
-      padding: '2rem',
-      backgroundColor: '#1e1e2f',
-      borderRadius: '12px',
-      color: '#ffffff',
-      fontFamily: 'sans-serif',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+      padding: '2.5rem',
+      backgroundColor: '#ffffff',
+      borderRadius: '16px',
+      color: '#212529',
+      fontFamily: '"Outfit", "Inter", sans-serif',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.05)',
+      border: '1px solid #dee2e6'
     }}>
-      <h1 style={{ borderBottom: '1px solid #3d3d5c', paddingBottom: '1rem', color: '#ffd700' }}>
+      <h1 style={{ borderBottom: '1px solid #e9ecef', paddingBottom: '1rem', color: '#1a1a1a', fontWeight: '900', margin: 0 }}>
         Speechless - Admin Panel
       </h1>
 
@@ -54,19 +55,20 @@ export const AdminPanel: React.FC = () => {
         
         {/* Lingua Applicazione */}
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Lingua Evento</label>
+          <label style={{ display: 'block', marginBottom: '0.6rem', fontWeight: 'bold', color: '#495057' }}>Lingua Evento</label>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button
               type="button"
               onClick={() => handleLanguageChange('it')}
               style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: i18n.language === 'it' ? '#ffd700' : '#3d3d5c',
-                color: i18n.language === 'it' ? '#000' : '#fff',
+                padding: '0.6rem 1.2rem',
+                backgroundColor: i18n.language === 'it' ? '#1a1a1a' : '#f1f3f5',
+                color: i18n.language === 'it' ? '#fff' : '#495057',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                transition: 'background-color 0.15s'
               }}
             >
               Italiano (IT)
@@ -75,13 +77,14 @@ export const AdminPanel: React.FC = () => {
               type="button"
               onClick={() => handleLanguageChange('en')}
               style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: i18n.language === 'en' ? '#ffd700' : '#3d3d5c',
-                color: i18n.language === 'en' ? '#000' : '#fff',
+                padding: '0.6rem 1.2rem',
+                backgroundColor: i18n.language === 'en' ? '#1a1a1a' : '#f1f3f5',
+                color: i18n.language === 'en' ? '#fff' : '#495057',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                transition: 'background-color 0.15s'
               }}
             >
               English (EN)
@@ -91,7 +94,7 @@ export const AdminPanel: React.FC = () => {
 
         {/* Seed Evento */}
         <div>
-          <label htmlFor="seed" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+          <label htmlFor="seed" style={{ display: 'block', marginBottom: '0.6rem', fontWeight: 'bold', color: '#495057' }}>
             Seed Evento (Parole/Frasi chiave)
           </label>
           <input
@@ -102,19 +105,21 @@ export const AdminPanel: React.FC = () => {
             placeholder="es. GDG Pescara, intelligenza artificiale"
             style={{
               width: '100%',
-              padding: '0.75rem',
-              borderRadius: '6px',
-              border: '1px solid #3d3d5c',
-              backgroundColor: '#0f0f1a',
-              color: '#fff',
-              boxSizing: 'border-box'
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              border: '1px solid #ced4da',
+              backgroundColor: '#f8f9fa',
+              color: '#212529',
+              boxSizing: 'border-box',
+              outline: 'none',
+              fontSize: '1rem'
             }}
           />
         </div>
 
         {/* Numero di Slide */}
         <div>
-          <label htmlFor="slidesCount" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+          <label htmlFor="slidesCount" style={{ display: 'block', marginBottom: '0.6rem', fontWeight: 'bold', color: '#495057' }}>
             Numero di Slide per Round
           </label>
           <input
@@ -126,19 +131,21 @@ export const AdminPanel: React.FC = () => {
             onChange={(e) => setSlidesCountInput(Number(e.target.value))}
             style={{
               width: '120px',
-              padding: '0.75rem',
-              borderRadius: '6px',
-              border: '1px solid #3d3d5c',
-              backgroundColor: '#0f0f1a',
-              color: '#fff',
-              boxSizing: 'border-box'
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              border: '1px solid #ced4da',
+              backgroundColor: '#f8f9fa',
+              color: '#212529',
+              boxSizing: 'border-box',
+              outline: 'none',
+              fontSize: '1rem'
             }}
           />
         </div>
 
         {/* Stile Visivo */}
         <div>
-          <label htmlFor="visualStyle" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+          <label htmlFor="visualStyle" style={{ display: 'block', marginBottom: '0.6rem', fontWeight: 'bold', color: '#495057' }}>
             Stile Visivo Slide (opzionale)
           </label>
           <select
@@ -147,12 +154,14 @@ export const AdminPanel: React.FC = () => {
             onChange={(e) => setVisualStyleInput(e.target.value)}
             style={{
               width: '100%',
-              padding: '0.75rem',
-              borderRadius: '6px',
-              border: '1px solid #3d3d5c',
-              backgroundColor: '#0f0f1a',
-              color: '#fff',
-              boxSizing: 'border-box'
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              border: '1px solid #ced4da',
+              backgroundColor: '#f8f9fa',
+              color: '#212529',
+              boxSizing: 'border-box',
+              outline: 'none',
+              fontSize: '1rem'
             }}
           >
             <option value="">Nessuno Stile (Default)</option>
@@ -170,14 +179,15 @@ export const AdminPanel: React.FC = () => {
           disabled={saving}
           style={{
             padding: '1rem',
-            backgroundColor: '#00c853',
+            backgroundColor: '#10b981',
             color: '#fff',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: '8px',
             cursor: 'pointer',
             fontSize: '1rem',
             fontWeight: 'bold',
-            marginTop: '1rem'
+            marginTop: '1rem',
+            transition: 'background-color 0.15s'
           }}
         >
           {saving ? 'Salvataggio...' : 'Salva Impostazioni'}
@@ -185,18 +195,19 @@ export const AdminPanel: React.FC = () => {
       </form>
 
       {/* Sezione Controlli Rapidi */}
-      <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid #3d3d5c' }}>
-        <h3 style={{ color: '#ff4444', margin: '0 0 1rem 0' }}>Controlli Rapidi</h3>
+      <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid #e9ecef' }}>
+        <h3 style={{ color: '#dc3545', margin: '0 0 1rem 0', fontWeight: 'bold' }}>Controlli Rapidi</h3>
         <button
           onClick={() => resetGame()}
           style={{
             padding: '0.75rem 1.5rem',
-            backgroundColor: '#d50000',
+            backgroundColor: '#dc3545',
             color: '#fff',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: '8px',
             cursor: 'pointer',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            transition: 'background-color 0.15s'
           }}
         >
           Forza Reset Gioco (SETUP)
