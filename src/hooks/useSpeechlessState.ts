@@ -10,6 +10,7 @@ export function useSpeechlessState() {
   const [gameState, setGameState] = useState<SessionState | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isOffline, setIsOffline] = useState<boolean>(false);
 
   useEffect(() => {
     let unsubscribe: () => void;
@@ -35,6 +36,7 @@ export function useSpeechlessState() {
         };
         setGameState(localMockState);
         setLoading(false);
+        setIsOffline(true);
       }, 3000);
 
       try {
@@ -49,11 +51,13 @@ export function useSpeechlessState() {
               setGameState(docSnap.data() as SessionState);
             }
             setLoading(false);
+            setIsOffline(false);
           },
           (err) => {
             console.error("Firestore snapshot error:", err);
             setError(err);
             setLoading(false);
+            setIsOffline(true);
           }
         );
       } catch (err: any) {
@@ -76,6 +80,7 @@ export function useSpeechlessState() {
         };
         setGameState(localMockState);
         setLoading(false);
+        setIsOffline(true);
       }
     }
 
@@ -88,6 +93,6 @@ export function useSpeechlessState() {
     };
   }, []);
 
-  return { gameState, loading, error };
+  return { gameState, loading, error, isOffline };
 }
 export default useSpeechlessState;
