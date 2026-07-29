@@ -1,7 +1,7 @@
 # SPEC002: Realtime Sync and Host Panel
 
 ## 1. Obiettivo
-Implementare il meccanismo di sincronizzazione in tempo reale dello stato dell'evento tra la dashboard dell'Host (Admin Panel) e lo schermo principale (Player Dashboard) proiettato in sala.
+Implementare il meccanismo di sincronizzazione in tempo reale dello stato dell'evento tra la dashboard dell'Host (Admin Panel) e lo schermo principale (Dashboard) proiettato in sala.
 
 ---
 
@@ -27,6 +27,10 @@ Utilizzeremo Firestore per memorizzare lo stato globale della sessione. Avremo u
       "slideQueue": [
         "https://firebasestorage.googleapis.com/.../slide1.jpg",
         "https://firebasestorage.googleapis.com/.../slide2.jpg"
+      ],
+      "slidePrompts": [
+        "a funny medieval wizard coding on a CRT monitor",
+        "a robotic dragon breathing blue fire at a server rack"
       ]
     }
   }
@@ -34,11 +38,11 @@ Utilizzeremo Firestore per memorizzare lo stato globale della sessione. Avremo u
 ```
 
 ### 2.2 Sincronizzazione in tempo reale (Firestore Listener)
-* **Nel Player Dashboard (Schermo Pubblico):** Un listener `onSnapshot` su `sessions/active_session` ascolta i cambiamenti dello stato. Qualsiasi modifica effettuata dall'host (es. cambio lingua o cambio slide attiva) aggiorna istantaneamente l'interfaccia proiettata in sala senza refresh.
+* **Nella Dashboard (Schermo Pubblico):** Un listener `onSnapshot` su `sessions/active_session` ascolta i cambiamenti dello stato. Qualsiasi modifica effettuata dall'host (es. cambio lingua o cambio slide attiva) aggiorna istantaneamente l'interfaccia proiettata in sala senza refresh.
 * **Nell'Admin Panel (Host):** L'host aggiorna il documento tramite scritture atomiche (es. modificando il campo `seed` o cambiando il `currentRound.status`).
 
 ### 2.3 Gestione delle Rotte
-* `/admin`: Pagina di amministrazione con controlli per modificare la lingua, il seed, il numero di slide e lo stile visivo. Contiene inoltre controlli rapidi per resettare il gioco o forzare l'uscita da un round bloccato.
+* `/admin`: Pagina di amministrazione con controlli per modificare la lingua, il seed, il numero di slide e lo stile visivo. Contiene inoltre controlli rapidi per resettare Speechless o forzare l'uscita da un round bloccato.
 * `/`: Pagina del giocatore/proiettore. Mostra la schermata di selezione livello o la presentazione in corso in base a `currentRound.status`.
 
 ---

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { generateSpeechlessSlide } from '../firebase/slides';
 
 export interface SlideQueueItem {
@@ -12,44 +12,65 @@ export interface SlideQueueItem {
 interface UseImagePreloadProps {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Legend';
   visualStyle: string | null;
-  keywords: string[];
+  slidePrompts?: string[];
   totalSlides: number;
   active: boolean;
 }
 
+const EMPTY_ARRAY: string[] = [];
+
 export function useImagePreload({
   difficulty,
   visualStyle,
-  keywords,
+  slidePrompts = EMPTY_ARRAY,
   totalSlides,
   active,
 }: UseImagePreloadProps) {
   const [slideQueue, setSlideQueue] = useState<SlideQueueItem[]>([]);
   const queueRef = useRef<SlideQueueItem[]>([]);
 
-  // Funzione helper per generare un prompt casuale per il livello Legend ed Advanced
-  const generateRandomPrompt = (index: number): string => {
-    const subjects = ['a coding cat', 'a flying pig', 'a database crash', 'a dinosaur coding in assembly', 'a cup of coffee overflowing', 'a pixel art rocket'];
-    const actions = ['drinking coffee', 'exploding in space', 'screaming at a server', 'dancing in a server room', 'floating in a bubble'];
-    const randomSubject = subjects[Math.floor(Math.random() * subjects.length)];
-    const randomAction = actions[Math.floor(Math.random() * actions.length)];
-    return `${randomSubject} ${randomAction}, slide number ${index + 1}`;
-  };
+  // Costruisce il prompt della singola slide in base al soggetto di Gemini ed allo stile
+  const buildPromptForSlide = useCallback((index: number): string => {
+    // Se i prompt dinamici di Gemini sono già generati ed esiste quello per questo indice, usalo
+    const basePrompt = (slidePrompts && slidePrompts[index]) 
+      ? slidePrompts[index] 
+      : `an abstract digital art concept related to ${difficulty} level`;
 
-  // Costruisce il prompt della singola slide in base alla difficoltà ed alle keyword di Gemini
-  const buildPromptForSlide = (index: number): string => {
-    if (difficulty === 'Beginner' && keywords.length > 0) {
-      // Per beginner, usa le parole chiave generate da Gemini
-      const kw = keywords[index % keywords.length];
-      return `A clear illustration showing ${kw}, flat presentation vector slide format`;
+    // Se non è stato impostato uno stile globale dall'host, ne applichiamo uno casuale per ciascuna slide per massimizzare la varietà grafica
+    if (!visualStyle) {
+      const defaultStyles = [
+        'isometric pixel art, 16-bit retro video game style',
+        'vibrant 3D claymation, cute plasticine characters',
+        'retro 80s synthwave neon vector illustration',
+        'vintage gouache illustration, children\'s book style',
+        'pop art comic book style, dotted halftone shading, bold outlines',
+        'cyberpunk digital painting, glowing neon lights and wires',
+        'minimalist flat vector illustration, pastel color palette',
+        'whimsical watercolor painting with ink outlines',
+        'medieval manuscript illumination style, gold leaf accents',
+        'steampunk blueprint schematic, detailed chalk drawing on blackboard',
+        'low-poly 3D papercraft model, colorful folded paper textures',
+        'vintage tarot card design, mystical borders and engravings',
+        'psychedelic 70s poster art, swirling patterns, vibrant colors',
+        'cute chibi anime sticker design, glossy outline',
+        'expressionist oil painting, thick impasto brushstrokes',
+        'constructivist propaganda poster, bold geometric shapes, red and black'
+      ];
+      const randomStyle = defaultStyles[index % defaultStyles.length];
+      return `${basePrompt}, ${randomStyle}`;
     }
-    // Per Legend o Advanced, genera prompt totalmente slegati e astratti
-    return generateRandomPrompt(index);
-  };
+
+    return basePrompt;
+  }, [difficulty, slidePrompts, visualStyle]);
 
   // Inizializza la coda dei compiti delle slide
   useEffect(() => {
     if (!active || totalSlides <= 0) return;
+
+    // Se stiamo aspettando i prompt delle slide generati da Gemini, non inizializziamo la coda finché non sono pronti
+    if (active && (!slidePrompts || slidePrompts.length === 0)) {
+      return;
+    }
 
     const initialQueue: SlideQueueItem[] = Array.from({ length: totalSlides }, (_, i) => ({
       index: i,
@@ -60,10 +81,18 @@ export function useImagePreload({
 
     setSlideQueue(initialQueue);
     queueRef.current = initialQueue;
-  }, [active, difficulty, keywords, totalSlides]);
+  }, [active, totalSlides, buildPromptForSlide, slidePrompts]);
+
+  const updateQueueItem = useCallback((index: number, updates: Partial<SlideQueueItem>) => {
+    const updated = queueRef.current.map((item) =>
+      item.index === index ? { ...item, ...updates } : item
+    );
+    queueRef.current = updated;
+    setSlideQueue(updated);
+  }, []);
 
   // Gestore della coda asincrona di generazione e preloading delle immagini
-  const triggerGenerationForIndex = async (index: number) => {
+  const triggerGenerationForIndex = useCallback(async (index: number) => {
     // Evita generazioni duplicate
     const currentItem = queueRef.current[index];
     if (!currentItem || currentItem.status !== 'PENDING') return;
@@ -89,19 +118,11 @@ export function useImagePreload({
       console.error(`Errore generazione slide #${index + 1}:`, err);
       updateQueueItem(index, { status: 'FAILED', error: err.message });
     }
-  };
-
-  const updateQueueItem = (index: number, updates: Partial<SlideQueueItem>) => {
-    const updated = queueRef.current.map((item) =>
-      item.index === index ? { ...item, ...updates } : item
-    );
-    queueRef.current = updated;
-    setSlideQueue(updated);
-  };
+  }, [visualStyle, updateQueueItem]);
 
   // Gestione dinamica del pipelining progressivo (vantaggio di 2 slide)
-  const preloadSlidesForCurrentIndex = (currentIndex: number) => {
-    if (!active || slideQueue.length === 0) return;
+  const preloadSlidesForCurrentIndex = useCallback((currentIndex: number) => {
+    if (!active || queueRef.current.length === 0) return;
 
     // Genera e carica in anticipo: slide corrente (N), N+1 e N+2
     const targetIndices = [currentIndex, currentIndex + 1, currentIndex + 2].filter(
@@ -114,7 +135,7 @@ export function useImagePreload({
         triggerGenerationForIndex(idx);
       }
     });
-  };
+  }, [active, totalSlides, triggerGenerationForIndex]);
 
   return { slideQueue, preloadSlidesForCurrentIndex };
 }

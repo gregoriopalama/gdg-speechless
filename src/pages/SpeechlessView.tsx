@@ -13,15 +13,13 @@ export const SpeechlessView: React.FC = () => {
   const visualStyle = gameState?.visualStyle || null;
   const seed = gameState?.seed || '';
 
-  if (!currentRound) return null;
-
   const [keywords, setKeywords] = useState<string[]>([]);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generatingTheme, setGeneratingTheme] = useState<boolean>(false);
 
   // Genera il tema e le keywords all'avvio dell'INTRO
   useEffect(() => {
-    if (currentRound.status !== 'INTRO') return;
+    if (!currentRound || currentRound.status !== 'INTRO') return;
 
     let active = true;
 
@@ -30,11 +28,11 @@ export const SpeechlessView: React.FC = () => {
       setGeneratingTheme(true);
       setGenerationError(null);
       try {
-        const result = await generateSpeechlessTheme(currentRound.difficulty, seed, gameState?.language || 'it');
+        const result = await generateSpeechlessTheme(currentRound.difficulty, seed, gameState?.language || 'it', currentRound.totalSlides);
         if (active) {
           setKeywords(result.keywords);
-          // Salva il tema generato nel database
-          await updateRound({ theme: result.theme });
+          // Salva il tema generato nel database insieme ai prompt delle slide
+          await updateRound({ theme: result.theme, slidePrompts: result.slidePrompts });
         }
       } catch (err: any) {
         console.error("Errore generazione tema:", err);
@@ -54,30 +52,56 @@ export const SpeechlessView: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [currentRound.status, currentRound.difficulty, seed]);
+  }, [currentRound?.status, currentRound?.difficulty, currentRound?.totalSlides, seed, gameState?.language, updateRound]);
 
   // Hook per il caricamento preventivo asincrono delle immagini delle slide
   const { slideQueue, preloadSlidesForCurrentIndex } = useImagePreload({
-    difficulty: currentRound.difficulty,
+    difficulty: currentRound?.difficulty || 'Beginner',
     visualStyle,
-    keywords,
-    totalSlides: currentRound.totalSlides,
-    active: currentRound.status === 'PLAYING' || currentRound.status === 'INTRO',
+    slidePrompts: currentRound?.slidePrompts,
+    totalSlides: currentRound?.totalSlides || 5,
+    active: !!currentRound && (currentRound.status === 'PLAYING' || currentRound.status === 'INTRO'),
   });
 
   // Pre-carica e genera le slide future in background basandosi sull'indice corrente
   useEffect(() => {
+    if (!currentRound) return;
     if (currentRound.status === 'PLAYING') {
       preloadSlidesForCurrentIndex(currentRound.currentSlideIndex);
     } else if (currentRound.status === 'INTRO' && keywords.length > 0) {
-      // Inizia a generare subito slide 1 e slide 2 durante l'intro di annuncio tema
-      preloadSlidesForCurrentIndex(0);
+      // Avvia la generazione di tutte le slide in background in parallelo per eliminare i lag visivi
+      for (let i = 0; i < currentRound.totalSlides; i++) {
+        preloadSlidesForCurrentIndex(i);
+      }
     }
-  }, [currentRound.status, currentRound.currentSlideIndex, keywords]);
+  }, [currentRound?.status, currentRound?.currentSlideIndex, currentRound?.totalSlides, keywords, preloadSlidesForCurrentIndex]);
+
+  const handleNext = React.useCallback(() => {
+    if (!currentRound) return;
+    // Avanza se la slide corrente è pronta, altrimenti aspetta
+    const currentSlide = slideQueue[currentRound.currentSlideIndex];
+    if (currentSlide && currentSlide.status !== 'READY') {
+      console.warn("La slide successiva non è ancora pronta. Attendi la generazione.");
+      return;
+    }
+
+    if (currentRound.currentSlideIndex < currentRound.totalSlides - 1) {
+      updateRound({ currentSlideIndex: currentRound.currentSlideIndex + 1 });
+    } else {
+      updateRound({ status: 'FINISHED' });
+    }
+  }, [currentRound, slideQueue, updateRound]);
+
+  const handlePrev = React.useCallback(() => {
+    if (!currentRound) return;
+    if (currentRound.currentSlideIndex > 0) {
+      updateRound({ currentSlideIndex: currentRound.currentSlideIndex - 1 });
+    }
+  }, [currentRound, updateRound]);
 
   // Gestione tasti di navigazione globali (ArrowRight, Space, Enter, ArrowLeft)
   useEffect(() => {
-    if (currentRound.status !== 'PLAYING') return;
+    if (!currentRound || currentRound.status !== 'PLAYING') return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['ArrowRight', ' ', 'Enter'].includes(e.key)) {
@@ -93,28 +117,9 @@ export const SpeechlessView: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [currentRound.status, currentRound.currentSlideIndex, slideQueue]);
+  }, [currentRound?.status, handleNext, handlePrev]);
 
-  const handleNext = () => {
-    // Avanza se la slide corrente è pronta, altrimenti aspetta
-    const currentSlide = slideQueue[currentRound.currentSlideIndex];
-    if (currentSlide && currentSlide.status !== 'READY') {
-      console.warn("La slide successiva non è ancora pronta. Attendi la generazione.");
-      return;
-    }
-
-    if (currentRound.currentSlideIndex < currentRound.totalSlides - 1) {
-      updateRound({ currentSlideIndex: currentRound.currentSlideIndex + 1 });
-    } else {
-      updateRound({ status: 'FINISHED' });
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentRound.currentSlideIndex > 0) {
-      updateRound({ currentSlideIndex: currentRound.currentSlideIndex - 1 });
-    }
-  };
+  if (!currentRound) return null;
 
   if (currentRound.status === 'ERROR') {
     return <ErrorFallback error={generationError || "Errore sconosciuto API"} onReset={resetGame} />;
@@ -201,26 +206,14 @@ export const SpeechlessView: React.FC = () => {
         </div>
       )}
 
-      {/* Tema bloccato in basso con sfondo semitrasparente chiaro (glassmorphism) */}
-      <div style={subtitleOverlayStyle} onClick={(e) => e.stopPropagation()}>
-        <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800', color: '#1a1a1a' }}>
+      {/* Tema bloccato in basso con sfondo semitrasparente scuro (glassmorphism) a tutta larghezza */}
+      <div style={subtitleOverlayStyle}>
+        <p style={{ margin: 0, fontSize: '1.7rem', fontWeight: '850', color: '#ffffff', textShadow: '0 2px 4px rgba(0, 0, 0, 0.6)' }}>
           {currentRound.theme}
         </p>
-        <p style={{ margin: '0.3rem 0 0 0', fontSize: '0.9rem', color: '#495057', fontWeight: '500' }}>
+        <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.95rem', color: '#cbd5e1', fontWeight: '600', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>
           Slide {currentRound.currentSlideIndex + 1} di {currentRound.totalSlides}
         </p>
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.2rem', justifyContent: 'center' }}>
-          <button
-            onClick={handlePrev}
-            disabled={currentRound.currentSlideIndex === 0}
-            style={navButtonStyle(currentRound.currentSlideIndex === 0)}
-          >
-            &larr; {t('gameplay.prev')}
-          </button>
-          <button onClick={handleNext} style={navButtonStyle(false)}>
-            {t('gameplay.next')} &rarr;
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -289,18 +282,21 @@ const slidePlaceholderStyle = (index: number): React.CSSProperties => {
 
 const subtitleOverlayStyle: React.CSSProperties = {
   position: 'absolute',
-  bottom: '2.5rem',
-  left: '50%',
-  transform: 'translateX(-50%)',
-  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(0, 0, 0, 0.08)',
-  borderRadius: '18px',
-  padding: '1.5rem 3rem',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  width: '100%',
+  backgroundColor: 'rgba(0, 0, 0, 0.65)',
+  backdropFilter: 'blur(15px) saturate(150%)',
+  borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+  padding: '1.25rem 2rem',
   textAlign: 'center',
-  width: '80%',
-  maxWidth: '750px',
-  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.06)',
+  boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.3)',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  boxSizing: 'border-box',
 };
 
 const introLabelStyle: React.CSSProperties = {
@@ -350,16 +346,6 @@ const buttonStyle: React.CSSProperties = {
   cursor: 'pointer',
   boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
 };
-
-const navButtonStyle = (disabled: boolean): React.CSSProperties => ({
-  backgroundColor: 'rgba(0, 0, 0, 0.05)',
-  color: disabled ? '#adb5bd' : '#1a1a1a',
-  border: 'none',
-  padding: '0.5rem 1.2rem',
-  borderRadius: '8px',
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  fontWeight: 'bold',
-});
 
 // Aggiungi keyframes CSS per lo spinner
 const styleSheet = document.styleSheets[0] || (() => {

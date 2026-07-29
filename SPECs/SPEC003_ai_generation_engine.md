@@ -7,31 +7,37 @@ Implementare il motore di intelligenza artificiale per la generazione dei temi (
 
 ## 2. Dettagli Implementativi
 
-### 2.1 Prompt Engineering per Gemini (Generazione Tema)
-L'applicazione invia una richiesta a Gemini strutturando il prompt in base alle impostazioni di lingua, difficoltà e seed dell'host.
+### 2.1 Prompt Engineering per Gemini (Generazione Tema e Soggetti)
+L'applicazione invia una richiesta a Gemini strutturando il prompt in base alle impostazioni di lingua, difficoltà, seed dell'host e numero di slide (`slidesCount`).
 
 #### Prompt di Sistema (System Instructions):
 ```text
-Sei il motore di Speechless, un PowerPoint Karaoke game divertente per meetup tech (GDG).
-Il tuo compito è generare un singolo Titolo di presentazione in lingua {language} basato sul livello di difficoltà {difficulty} e sul Seed dell'evento {seed}.
-Il titolo deve essere goliardico, originale e in linea con il livello impostato.
+Sei il motore di Speechless, un PowerPoint Karaoke divertente per meetup tech (GDG).
+Il tuo compito è generare:
+1. Un singolo Titolo di presentazione in lingua {language} basato sulla difficoltà "{difficulty}" e sul Seed "{seed}". Il titolo deve essere goliardico, originale e in linea con la difficoltà.
+2. Un array JSON di esattamente {slidesCount} prompt/soggetti testuali in lingua INGLESE ("slidePrompts") da passare a un generatore di immagini AI.
 Restituisci l'output rigorosamente in formato JSON:
 {
   "theme": "titolo generato",
-  "keywords": ["parola1", "parola2", "parola3"]
+  "keywords": ["parola1", "parola2", "parola3"],
+  "slidePrompts": [
+    "detailed description of slide 1 subject in English",
+    "detailed description of slide 2 subject in English",
+    ...
+  ]
 }
 ```
 
-#### Regole per Difficoltà nel Prompt:
-* **Beginner:** Temi quotidiani e semplici (es. "L'impatto dei gatti sulla produttività degli sviluppatori"). Le keywords fornite in JSON devono riflettere strettamente il tema (serviranno per generare le immagini).
-* **Intermediate / Advanced:** Temi più complessi o marcatamente nerd/tech (es. "Ottimizzare Kubernetes usando l'astrologia").
-* **Legend:** Temi assurdi, paradossali e complessi (es. "La teoria quantistica della fila alle poste"). Le keywords fornite devono essere astratte o disconnesse dal tema.
+#### Regole per Difficoltà nel Prompt (Generazione Soggetti Slide):
+* **Beginner:** I soggetti descritti in `slidePrompts` devono essere semplici, divertenti e direttamente connessi al tema generato (es. se il tema è sulla pizza, i soggetti saranno "dough kneading", "pizza oven", ecc.).
+* **Intermediate:** I soggetti devono essere moderatamente stravaganti e solo parzialmente o ironicamente correlati al tema della presentazione.
+* **Legend / Advanced:** I soggetti in `slidePrompts` devono essere completamente casuali, assurdi, privi di nesso logico con il tema e del tutto indipendenti l'uno dall'altro.
 
-### 2.2 Prompt Engineering per Nano Banana (Generazione Slide)
-L'applicazione compone il prompt per ciascuna slide basandosi sul livello di gioco e sullo stile visivo impostato:
-* **Beginner:** Il prompt dell'immagine include direttamente le parole chiave estratte dal tema generato da Gemini (es. *"A cute cat sitting on a laptop typing code"*).
-* **Legend:** Il prompt dell'immagine viene costruito estraendo concetti casuali e stili artistici imprevedibili (es. *"an abstract graph showing negative values, crayons drawing style"*), evitando volutamente qualsiasi parola chiave del tema.
-* **Iniezione Stile (se configurato):** Se l'host ha configurato uno stile visivo (es. *Pixel Art*), la stringa `, pixel art style, high quality` viene accodata in fondo a ogni prompt d'immagine generato.
+### 2.2 Prompt Engineering per Imagen/Nano Banana (Generazione Slide)
+L'applicazione non usa più soggetti hardcoded, ma invia direttamente a Imagen il soggetto estratto da `slidePrompts[index]` restituito da Gemini:
+* **Prevenzione di Numeri e Grafici Ripetitivi:** I prompt inviati a Imagen **non devono contenere riferimenti al numero di slide** (es. vietato `"slide number X"`) né gergo strutturale di presentazione (es. vietato `"presentation slide format"`). Al loro posto, il soggetto di Gemini viene arricchito con suffissi di stile.
+* **Varietà degli stili visivi:** Se l'host non ha configurato uno stile globale, l'applicazione assegna a ciascun prompt una tecnica artistica differente scelta da una lista estesa di 16 stili visivi premium (es. *isometric pixel art*, *vibrant 3D claymation*, *retro 80s synthwave neon*, *vintage gouache*, *pop art comic book with halftone*, *medieval manuscript*, *steampunk blueprint*, *chibi anime sticker*, ecc.) per massimizzare la varietà grafica del round.
+* **Iniezione Stile (se configurato):** Se l'host ha configurato uno stile visivo (es. *Pixel Art*), la stringa `, style: Pixel Art, high quality` viene accodata in fondo a ogni prompt d'immagine generato.
 
 ### 2.3 Gestione degli Errori e Safety Settings
 * Le chiamate API a Vertex AI includeranno impostazioni di sicurezza tolleranti ma conformi (`blockNone` o `blockLow` sui filtri di molestia/odio per evitare falsi positivi su termini goliardici).

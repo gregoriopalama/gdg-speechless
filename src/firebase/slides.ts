@@ -29,9 +29,9 @@ export async function generateSpeechlessSlide(
   // Componi il prompt finale includendo lo stile visivo configurato dall'host
   let finalPrompt = prompt;
   if (visualStyle) {
-    finalPrompt += `, style: ${visualStyle}, high quality, clean presentation slide format`;
+    finalPrompt += `, style: ${visualStyle}, high quality digital art`;
   } else {
-    finalPrompt += `, simple graphic presentation slide format`;
+    finalPrompt += `, clean digital art illustration, vector style`;
   }
 
   // Esegue la chiamata al modello di generazione immagini

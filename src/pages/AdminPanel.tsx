@@ -210,7 +210,7 @@ export const AdminPanel: React.FC = () => {
             transition: 'background-color 0.15s'
           }}
         >
-          Forza Reset Gioco (SETUP)
+          Forza Reset Speechless (SETUP)
         </button>
       </div>
     </div>

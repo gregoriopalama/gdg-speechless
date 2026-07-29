@@ -21,7 +21,7 @@ interface SlideQueueItem {
 
 #### Flusso Logico di Gestione Coda:
 1. **Fase Iniziale:** All'avvio del round, lo stato passa a `INTRO` (animazione annuncio tema). Vengono invocate immediatamente le chiamate per generare le immagini per la **slide #1** e **slide #2**.
-2. **Sblocco del Gioco:** Non appena la **slide #1** è in stato `READY` e il tema è generato, il gioco sblocca il tasto "Start" (o passa in automatico) mostrando la prima slide.
+2. **Sblocco di Speechless:** Non appena la **slide #1** è in stato `READY` e il tema è generato, l'app sblocca il tasto "Start" (o passa in automatico) mostrando la prima slide.
 3. **Pipelining Attivo:** 
    * Quando il relatore visualizza la slide $N$, l'applicazione controlla lo stato della slide $N+1$ e $N+2$.
    * Se la slide $N+2$ non è ancora in coda di generazione, avvia la chiamata API di generazione per la slide $N+2$ in background.

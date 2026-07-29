@@ -46,6 +46,23 @@ export const Dashboard: React.FC = () => {
     'legend',
   ];
 
+  const emojis: Record<string, string> = {
+    beginner: '🍌',
+    intermediate: '🐒',
+    advanced: '🌶️',
+    legend: '👑',
+  };
+
+  const getLevelColor = (lvl: string) => {
+    switch (lvl) {
+      case 'beginner': return '#2b6cb0';
+      case 'intermediate': return '#319795';
+      case 'advanced': return '#805ad5';
+      case 'legend': return '#d69e2e';
+      default: return '#212529';
+    }
+  };
+
   return (
     <div style={containerStyle}>
       <header style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
@@ -64,10 +81,12 @@ export const Dashboard: React.FC = () => {
             <div
               key={lvl}
               onClick={() => handleSelectDifficulty(capitalized)}
-              style={cardStyle}
+              className="level-card"
             >
-              <h2 style={cardTitleStyle(lvl)}>{t(`levels.${lvl}.name`)}</h2>
-              <p style={cardDescStyle}>{t(`levels.${lvl}.description`)}</p>
+              <div className="level-emoji">{emojis[lvl]}</div>
+              <h2 className="level-title" style={{ color: getLevelColor(lvl) }}>
+                {t(`levels.${lvl}.name`)}
+              </h2>
             </div>
           );
         })}
@@ -113,46 +132,10 @@ const subtitleStyle: React.CSSProperties = {
 
 const gridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
   gap: '2rem',
   width: '100%',
-  maxWidth: '1000px',
-};
-
-const cardStyle: React.CSSProperties = {
-  border: '1px solid #dee2e6',
-  borderRadius: '16px',
-  padding: '2rem',
-  cursor: 'pointer',
-  backgroundColor: '#ffffff',
-  transition: 'transform 0.15s, box-shadow 0.15s',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
-  textAlign: 'left',
-  minHeight: '140px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-};
-
-const cardTitleStyle = (lvl: string): React.CSSProperties => {
-  let color = '#2b6cb0'; // beginner (blu elegante)
-  if (lvl === 'intermediate') color = '#319795'; // intermediate (ottanio)
-  if (lvl === 'advanced') color = '#805ad5'; // advanced (viola)
-  if (lvl === 'legend') color = '#d69e2e'; // legend (oro caldo)
-
-  return {
-    fontSize: '1.8rem',
-    margin: '0 0 0.75rem 0',
-    fontWeight: 'bold',
-    color,
-  };
-};
-
-const cardDescStyle: React.CSSProperties = {
-  fontSize: '0.95rem',
-  color: '#495057',
-  margin: 0,
-  lineHeight: '1.45',
+  maxWidth: '900px',
 };
 
 const loaderStyle: React.CSSProperties = {

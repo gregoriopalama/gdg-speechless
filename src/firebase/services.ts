@@ -10,6 +10,7 @@ export interface RoundState {
   currentSlideIndex: number;
   totalSlides: number;
   slideQueue: string[];
+  slidePrompts?: string[];
 }
 
 export interface SessionState {
@@ -38,6 +39,7 @@ const DEFAULT_SESSION_STATE: SessionState = {
     currentSlideIndex: 0,
     totalSlides: 5,
     slideQueue: [],
+    slidePrompts: [],
   },
 };
 
@@ -86,5 +88,6 @@ export async function resetSession(): Promise<void> {
     'currentRound.theme': '',
     'currentRound.currentSlideIndex': 0,
     'currentRound.slideQueue': [],
+    'currentRound.slidePrompts': [],
   });
 }

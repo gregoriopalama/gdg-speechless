@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useSpeechlessState } from '../hooks/useSpeechlessState';
 import type { SessionState, RoundState } from '../firebase/services';
@@ -61,7 +61,7 @@ export const SpeechlessProvider: React.FC<{ children: ReactNode }> = ({ children
   }, [cloudLoading, cloudState]);
 
   // Implementazione sicura delle funzioni di mutazione che operano sia sul Cloud sia sulla memoria locale
-  const handleUpdateHostConfig = async (config: Partial<Pick<SessionState, 'seed' | 'language' | 'slidesCount' | 'visualStyle'>>) => {
+  const handleUpdateHostConfig = useCallback(async (config: Partial<Pick<SessionState, 'seed' | 'language' | 'slidesCount' | 'visualStyle'>>) => {
     if (!isOfflineMode) {
       try {
         await updateHostConfiguration(config);
@@ -74,9 +74,9 @@ export const SpeechlessProvider: React.FC<{ children: ReactNode }> = ({ children
     const updated = { ...memoryDbState, ...config };
     memoryDbState = updated;
     setLocalState(updated);
-  };
+  }, [isOfflineMode]);
 
-  const handleUpdateRound = async (roundUpdate: Partial<RoundState>) => {
+  const handleUpdateRound = useCallback(async (roundUpdate: Partial<RoundState>) => {
     if (!isOfflineMode) {
       try {
         await updateRoundState(roundUpdate);
@@ -99,9 +99,9 @@ export const SpeechlessProvider: React.FC<{ children: ReactNode }> = ({ children
     const updated = { ...memoryDbState, currentRound: updatedRound };
     memoryDbState = updated;
     setLocalState(updated);
-  };
+  }, [isOfflineMode]);
 
-  const handleResetGame = async () => {
+  const handleResetGame = useCallback(async () => {
     if (!isOfflineMode) {
       try {
         await resetSession();
@@ -125,7 +125,7 @@ export const SpeechlessProvider: React.FC<{ children: ReactNode }> = ({ children
     };
     memoryDbState = updated;
     setLocalState(updated);
-  };
+  }, [isOfflineMode]);
 
   // Se stiamo ancora caricando e non siamo in modalità offline di emergenza, mostra il caricamento
   const isLoading = cloudLoading && !isOfflineMode;

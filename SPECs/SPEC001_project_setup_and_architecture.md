@@ -11,7 +11,7 @@ Configurare l'ambiente di sviluppo per la web application **Speechless** utilizz
 * **Frontend:** React 18+ (con TypeScript per la tipizzazione statica e la sicurezza dei dati).
 * **Build Tool:** Vite (per un bundling ultra rapido e moduli ES nativi).
 * **CSS/Styling:** CSS Vanilla (Custom Properties per il tema e Flexbox/Grid per i layout responsive) o TailwindCSS (previa conferma utente).
-* **Routing:** `react-router-dom` per la gestione delle pagine (`/` per il gioco, `/admin` per l'host).
+* **Routing:** `react-router-dom` per la gestione delle pagine (`/` per Speechless, `/admin` per l'host).
 * **Internazionalizzazione (i18n):** `react-i18next` con file JSON locali per le traduzioni in Italiano (IT) e Inglese (EN).
 * **Backend & Hosting:** Firebase Suite (Firebase Hosting + Firebase Firestore per lo stato realtime).
 
@@ -39,14 +39,14 @@ speechless/
 │   ├── components/           # Componenti condivisi (es. Button, Loader)
 │   │   └── common/
 │   ├── pages/                # Pagine principali dell'applicazione
-│   │   ├── PlayerDashboard.tsx
+│   │   ├── Dashboard.tsx
 │   │   ├── AdminPanel.tsx
-│   │   └── GameView.tsx
+│   │   └── SpeechlessView.tsx
 │   ├── hooks/                # Custom React Hooks
-│   │   ├── useGameState.ts   # Gestione dello stato di gioco realtime
+│   │   ├── useSpeechlessState.ts   # Gestione dello stato di Speechless realtime
 │   │   └── useImagePreload.ts# Coda di caricamento progressivo immagini
 │   └── context/
-│       └── GameContext.tsx   # Contesto globale dell'applicazione
+│       └── SpeechlessContext.tsx   # Contesto globale dell'applicazione
 ```
 
 ### 2.3 Gestione delle Variabili d'Ambiente

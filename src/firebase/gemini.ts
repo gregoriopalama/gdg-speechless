@@ -9,6 +9,7 @@ export const ai = new GoogleGenerativeAI(apiKey);
 export interface GeneratedThemeResponse {
   theme: string;
   keywords: string[];
+  slidePrompts: string[];
 }
 
 // Configurazione standard filtri di sicurezza Vertex AI tollerante per gioco goliardico GDG
@@ -32,12 +33,13 @@ const safetySettings = [
 ];
 
 /**
- * Genera il tema e le parole chiave per il gioco Speechless basandosi su difficoltà, seed e lingua.
+ * Genera il tema, le parole chiave e i soggetti delle slide per Speechless basandosi su difficoltà, seed, lingua e numero di slide.
  */
 export async function generateSpeechlessTheme(
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Legend',
   seed: string,
-  language: 'it' | 'en'
+  language: 'it' | 'en',
+  slidesCount: number
 ): Promise<GeneratedThemeResponse> {
   if (!apiKey) {
     throw new Error("API Key di Gemini non configurata nel file .env.");
@@ -50,13 +52,19 @@ export async function generateSpeechlessTheme(
       responseMimeType: 'application/json', // forza la risposta strutturata JSON
     },
     safetySettings,
-    systemInstruction: `Sei il motore di Speechless, un PowerPoint Karaoke game divertente per meetup tech (GDG Pescara).
-Il tuo compito è generare un singolo Titolo di presentazione in lingua ${language === 'it' ? 'Italiano' : 'Inglese'} basato sul livello di difficoltà "${difficulty}" e sul Seed dell'evento "${seed || 'nessuno'}".
-Il titolo deve essere goliardico, originale, inaspettato e adatto alla difficoltà impostata.
+    systemInstruction: `Sei il motore di Speechless, un PowerPoint Karaoke divertente per meetup tech (GDG Pescara).
+Il tuo compito è generare:
+1. Un singolo Titolo di presentazione in lingua ${language === 'it' ? 'Italiano' : 'Inglese'} basato sul livello di difficoltà "${difficulty}" e sul Seed dell'evento "${seed || 'nessuno'}". Il titolo deve essere goliardico, originale e adatto alla difficoltà impostata.
+2. Un array JSON di esattamente ${slidesCount} descrizioni testuali in lingua INGLESE ("slidePrompts") da usare come prompt per generare immagini per le slide.
 Restituisci l'output rigorosamente in formato JSON rispettando lo schema:
 {
   "theme": "titolo generato",
-  "keywords": ["parola1", "parola2", "parola3"]
+  "keywords": ["parola1", "parola2", "parola3"],
+  "slidePrompts": [
+    "description of slide 1 subject in English",
+    "description of slide 2 subject in English",
+    ...
+  ]
 }`,
   });
 
@@ -64,16 +72,20 @@ Restituisci l'output rigorosamente in formato JSON rispettando lo schema:
   let promptDetails = '';
   switch (difficulty) {
     case 'Beginner':
-      promptDetails = `Genera un titolo molto semplice, di argomento quotidiano, banale e comprensibile a chiunque. Le 3 keywords nel JSON devono essere strettamente correlate e pertinenti al titolo generato (es. se parli di pizza, le keyword saranno farina, pomodoro, forno).`;
+      promptDetails = `Genera un titolo molto semplice, di argomento quotidiano, banale e comprensibile a chiunque. Le 3 keywords nel JSON devono essere strettamente correlate al titolo.
+Gli esattamente ${slidesCount} slidePrompts devono essere descrizioni di immagini semplici e divertenti DIRETTAMENTE correlate e pertinenti al tema (es. se parli di pizza, descrivi l'impasto, il forno, ecc.).`;
       break;
     case 'Intermediate':
-      promptDetails = `Genera un titolo divertente di media complessità che unisca un tema comune con un concetto vagamente tecnico o nerd. Le 3 keywords devono essere solo parzialmente correlate al titolo.`;
+      promptDetails = `Genera un titolo divertente di media complessità che unisca un tema comune con un concetto vagamente tecnico o nerd. Le 3 keywords devono essere solo parzialmente correlate al titolo.
+Gli esattamente ${slidesCount} slidePrompts devono essere descrizioni di immagini ironiche o bizzarre, solo parzialmente o indirettamente collegate al tema.`;
       break;
     case 'Advanced':
-      promptDetails = `Genera un titolo tecnico, paradossale o marcatamente nerd/settoriale (es. programmazione, dinosauri, filosofia). Le 3 keywords devono essere quasi completamente scorrelate dal titolo, per rendere difficile il collegamento.`;
+      promptDetails = `Genera un titolo tecnico, paradossale o marcatamente nerd/settoriale. Le 3 keywords devono essere quasi completamente scorrelate dal titolo.
+Gli esattamente ${slidesCount} slidePrompts devono essere descrizioni di soggetti completamente CASUALI, assurdi e stravaganti, del tutto privi di attinenza semantica con il titolo o tra di loro.`;
       break;
     case 'Legend':
-      promptDetails = `Genera un titolo estremamente assurdo, astratto, contorto e goliardico (es. la fisica quantistica applicata alle melanzane alla parmigiana). Le 3 keywords fornite devono essere del tutto causali ed escludere qualsiasi riferimento logico o semantico al titolo generato.`;
+      promptDetails = `Genera un titolo estremamente assurdo, astratto, contorto e goliardico. Le 3 keywords fornite devono essere del tutto causali.
+Gli esattamente ${slidesCount} slidePrompts devono essere descrizioni di soggetti totalmente ASSURDI, privi di nesso logico con il tema e del tutto indipendenti l'uno dall'altro (es. "a medieval knight playing laser tag", "a cat flying on a slice of bread").`;
       break;
   }
 
@@ -90,7 +102,7 @@ Restituisci l'output rigorosamente in formato JSON rispettando lo schema:
 
   const parsed = JSON.parse(text) as GeneratedThemeResponse;
   
-  if (!parsed.theme || !Array.isArray(parsed.keywords)) {
+  if (!parsed.theme || !Array.isArray(parsed.keywords) || !Array.isArray(parsed.slidePrompts)) {
     throw new Error("La risposta di Gemini non rispetta lo schema JSON atteso.");
   }
 

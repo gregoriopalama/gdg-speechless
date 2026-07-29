@@ -21,7 +21,7 @@ const MainNavigator: React.FC = () => {
         fontFamily: 'sans-serif',
         fontWeight: 'bold'
       }}>
-        Inizializzazione gioco...
+        Inizializzazione Speechless...
       </div>
     );
   }
